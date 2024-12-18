@@ -4,7 +4,7 @@ Stage 0 Shellcode to Download a Remote Payload and Execute it in Memory
 
 The Nt API calls ```NtAllocateVirtualMemory``` and ```NtProtectVirtualMemory``` are made using indirect syscalls.
 
-LoadLibraryA and WinHTTP calls are performed with return address spoofing.
+```LoadLibraryA``` and WinHTTP calls are performed with return address spoofing.
 
 # Usage
 
