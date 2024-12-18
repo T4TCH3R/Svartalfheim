@@ -26,7 +26,8 @@ parser.add_argument("-e","--endpoint", help="Http endpoint, ex : google.fr",type
 parser.add_argument("-u","--uri",help="Endpoint uri, ex : /path/to/shellcode",type=str,dest='argsUri',required=True)
 parser.add_argument("-p","--port",help="Http port",type=str,dest="argsPort", required=True)
 parser.add_argument("-a","--user-agent",help="User agent",type=str,dest="argsUseragent", required=False)
-parser.add_argument('-s', action='store_true', help="Use HTTPS")
+parser.add_argument("-s", action='store_true', help="Use HTTPS")
+parser.add_argument("-v", action='store_true', help="View shellcode at C format")
 
 args = parser.parse_args()
 
@@ -46,6 +47,7 @@ http_uri        = args.argsUri
 http_port       = args.argsPort 
 http_useragent  = args.argsUseragent
 http_secure     = args.s
+view_output     = args.v 
 
 secure_content = "FALSE"
 if(http_secure == True):
@@ -86,7 +88,8 @@ os.system("make")
 
 sh = open("./bin/shellcode.bin", "rb")
 sh_content = sh.read() 
-sh.close()
+if(view_output == False):
+    sh.close()
 
 sh_c_format = open("./payload.c", "w")
 sh_c_format.write(printShellcode(sh_content))
@@ -94,3 +97,7 @@ sh_c_format.close()
 
 print("[*] C format shellcode ready in payload.c")
 print(f"[*] Shellcode size {len(sh_content)} bytes")
+
+if(view_output == True):
+    print(printShellcode(sh_content))
+    sh.close()

@@ -48,6 +48,12 @@ LoadLibraryA and WinHTTP calls are performed with return address spoofing.
       <td>No</td>
       <td>Empty</td>
     </tr>
+     <tr>
+      <td>-v</td>
+      <td>View shellcode at C format</td>
+      <td>No</td>
+      <td>Empty</td>
+    </tr>
   </tbody>
 </table>
 
