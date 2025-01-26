@@ -62,4 +62,8 @@ VOID Main(
     _In_    PINSTANCE   Inst
 );
 
-
+/*  ---------------------
+    Entry.s 
+--------------------- */
+void*   GetShellcodeStart();
+void*   GetShellcodeEnd();

